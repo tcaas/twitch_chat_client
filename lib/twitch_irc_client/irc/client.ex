@@ -4,6 +4,7 @@ defmodule TwitchIrcClient.Irc.Client do
 
   alias TwitchIrcClient.Irc.Config
   alias TwitchIrcClient.Irc.State
+  alias TwitchIrcClient.Parser
 
   def start_link(%Config{} = config) do
     Connection.start_link(__MODULE__, config)
@@ -28,7 +29,8 @@ defmodule TwitchIrcClient.Irc.Client do
       {:ok, socket} ->
         state = State.set_socket(state, socket)
 
-        with :ok <- login_user(state) do
+        with :ok <- login_user(state),
+             :ok <- send_capabilites(state) do
           {:ok, state}
         else
           {:error, _error} -> {:backoff, 1000, state}
@@ -89,7 +91,7 @@ defmodule TwitchIrcClient.Irc.Client do
   end
 
   def handle_info({:tcp, _, data}, %State{} = state) do
-    Logger.info(data)
+    IO.inspect(Parser.parse_message(data))
     {:noreply, state}
   end
 
@@ -112,6 +114,17 @@ defmodule TwitchIrcClient.Irc.Client do
   defp login_user(%State{socket: socket, config: %Config{nick: nick, oauth_token: oauth_token}}) do
     with :ok <- :gen_tcp.send(socket, "PASS oauth:#{oauth_token}\r\n"),
          :ok <- :gen_tcp.send(socket, "NICK #{nick}\r\n") do
+      :ok
+    else
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  defp send_capabilites(%State{socket: socket}) do
+    with :ok <- :gen_tcp.send(socket, "CAP REQ :twitch.tv/membership\r\n"),
+         :ok <- :gen_tcp.send(socket, "CAP REQ :twitch.tv/tags\r\n"),
+         :ok <- :gen_tcp.send(socket, "CAP REQ :twitch.tv/commands\r\n"),
+         :ok <- :gen_tcp.send(socket, "CAP REQ :twitch.tv/tags twitch.tv/commands\r\n") do
       :ok
     else
       {:error, error} -> {:error, error}
