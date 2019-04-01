@@ -91,7 +91,7 @@ defmodule TwitchIrcClient.Irc.Client do
   end
 
   def handle_info({:tcp, _, data}, %State{} = state) do
-    IO.inspect(Parser.parse_message(data))
+    IO.inspect(Parser.parse_message(to_string(data)))
     {:noreply, state}
   end
 
