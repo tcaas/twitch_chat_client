@@ -5,6 +5,7 @@ defmodule TwitchIrcClient.Irc.Client do
   alias TwitchIrcClient.Irc.Config
   alias TwitchIrcClient.Irc.State
   alias TwitchIrcClient.Parser
+  alias TwitchIrcClient.RawMessage
 
   def start_link(%Config{} = config) do
     Connection.start_link(__MODULE__, config)
@@ -18,12 +19,16 @@ defmodule TwitchIrcClient.Irc.Client do
     Connection.call(conn, {:send, "#{message}\r\n"})
   end
 
+  def join_channel(conn, channel) when is_bitstring(channel) do
+    Connection.call(conn, {:join_channel, channel})
+  end
+
   def connect(_, %State{config: %Config{host: host, port: port, timeout: timeout}} = state) do
     case :gen_tcp.connect(String.to_charlist(host), port, [
            :list,
            {:active, true},
            {:packet, :line},
-           {:keepalive, true},
+           {:keepalive, false},
            {:send_timeout, timeout}
          ]) do
       {:ok, socket} ->
@@ -76,9 +81,17 @@ defmodule TwitchIrcClient.Irc.Client do
     case :gen_tcp.send(socket, message) do
       :ok ->
         {:reply, :ok, state}
-
       {:error, _} = error ->
         {:disconnect, error, error, state}
+    end
+  end
+
+  def handle_call({:join_channel, channel}, _, %State{socket: socket} = state) do
+    case :gen_tcp.send(socket, "JOIN ##{channel}") do
+      :ok -> 
+        {:reply, :ok, state}
+      {:error, _} ->
+        {:reply, :error, error}
     end
   end
 
@@ -91,12 +104,19 @@ defmodule TwitchIrcClient.Irc.Client do
   end
 
   def handle_info({:tcp, _, data}, %State{} = state) do
-    IO.inspect(Parser.parse_message(to_string(data)))
+    message = Parser.parse_message(to_string(data))
+    case message.command do
+      :JOIN -> State.add_message(message, make_ref())
+    end
     {:noreply, state}
   end
 
   def handle_info({_, :badarg}, %State{} = state) do
     {:connect, :reconnect, State.set_socket(state, nil)}
+  end
+
+  def handle_message(message, %State{} = state) do
+    
   end
 
   defp gen_anonymous_user() do
@@ -130,4 +150,5 @@ defmodule TwitchIrcClient.Irc.Client do
       {:error, error} -> {:error, error}
     end
   end
+
 end

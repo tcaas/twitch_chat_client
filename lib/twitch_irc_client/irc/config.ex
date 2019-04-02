@@ -5,9 +5,10 @@ defmodule TwitchIrcClient.Irc.Config do
             type: nil,
             host: nil,
             port: nil,
-            timeout: nil
+            timeout: nil,
+            channels: nil
 
-  def new(nick \\ :anonymous, oauth_token \\ nil, ssl \\ true, type \\ :irc, timeout \\ 10_000)
+  def new(nick \\ :anonymous, oauth_token \\ nil, ssl \\ true, type \\ :irc, timeout \\ 10_000, channels \\ [])
       when is_boolean(ssl) and is_atom(type) and is_integer(timeout) do
     {host, port} = default_config(ssl, type)
 
@@ -18,7 +19,8 @@ defmodule TwitchIrcClient.Irc.Config do
       type: type,
       host: host,
       port: port,
-      timeout: timeout
+      timeout: timeout,
+      channels: channels
     }
   end
 
