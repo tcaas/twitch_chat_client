@@ -36,6 +36,8 @@ defmodule TwitchIrcClient.Parser.RawMessage do
     end)
     |> Map.new()
 
+    IO.inspect(map)
+
     case update_and_check_command(struct(__MODULE__, map)) do
       {:ok, struct} ->
         struct
@@ -67,8 +69,6 @@ defmodule TwitchIrcClient.Parser.RawMessage do
     end
   end
 
-  # testusertcaas  bquce1e7ekhfyvbrwxz01rrwnd9g4m config = TwitchIrcClient.Irc.Config.new("testusertcaas", "vzu7hyqst0959owgtixospzp2g7qis", false, :irc, 10_000)
-  # nkyian         8w3mpwgkd40ye1tb1q7dq1xhx0goe4 config = TwitchIrcClient.Irc.Config.new("nkyian", "8w3mpwgkd40ye1tb1q7dq1xhx0goe4", false, :irc, 10_000)
   def new(message) do
     IO.inspect(message)
     {:unknown, message}

@@ -1,22 +1,27 @@
-defmodule TwitchIrcClient.Irc.Config.MessageQueue do
-    def new() do
-        %{
-            JOIN: :queue.new()
-        }
+defmodule TwitchIrcClient.Irc.MessageQueue do
+    defstruct channels: %{}
+
+    def new(channels \\ []) do
+        channels = channels
+        |> Enum.map(fn(channel) ->
+            {channel, %{}}
+        end)
+        |> Map.new()
+
+        %__MODULE__{channels: channels}
     end
 
-    def add_message(message_queue, message_type, ref) do
-        queue = Map.get(message_queue, ref)
-        Map.put(message_queue, :queue.in(queue, message))
+    def add_channel(%__MODULE__{channels: channels} = module, channel) do
+        channels = Map.put(channels, channel, %{})
+        %__MODULE__{module | channels: channels}
     end
 
-    def pop_message(message_queue, message_type) do
-        queue = Map.get(message_queue, message_type)
-        case :queue.out_r(queue) do
-            {:empty, internal_queue} ->
-                {:error, :empty_queue, internal_queue}
-            {{:value, value}, internal_queue} ->
-                {:ok, value, Map.put(message_queue, message_type, internal_queue)}
-        end
+    def delete_channel(%__MODULE__{channels: channels} = module, channel) do
+        channels = Map.delete(channels, channel)
+        %__MODULE__{module | channels: channels}
+    end
+
+    def add_message(%__MODULE__{channels: channels} = module, channel, type, ref, from, message) do
+
     end
 end

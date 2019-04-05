@@ -86,11 +86,15 @@ defmodule TwitchIrcClient.Irc.Client do
     end
   end
 
-  def handle_call({:join_channel, channel}, _, %State{socket: socket} = state) do
+  def handle_call({:join_channel, channel}, from, %State{socket: socket} = state) do
+    ref = make_ref()
+
+    state = state
+
     case :gen_tcp.send(socket, "JOIN ##{channel}") do
-      :ok -> 
+      :ok ->
         {:reply, :ok, state}
-      {:error, _} ->
+      {:error, error} ->
         {:reply, :error, error}
     end
   end
@@ -104,10 +108,9 @@ defmodule TwitchIrcClient.Irc.Client do
   end
 
   def handle_info({:tcp, _, data}, %State{} = state) do
+    IO.inspect(data)
     message = Parser.parse_message(to_string(data))
-    case message.command do
-      :JOIN -> State.add_message(message, make_ref())
-    end
+    IO.inspect(message)
     {:noreply, state}
   end
 
@@ -116,7 +119,7 @@ defmodule TwitchIrcClient.Irc.Client do
   end
 
   def handle_message(message, %State{} = state) do
-    
+
   end
 
   defp gen_anonymous_user() do

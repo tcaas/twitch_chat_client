@@ -11,7 +11,7 @@ defmodule TwitchIrcClient.Irc.State do
       socket: nil,
       roomstate: nil,
       userstate: nil,
-      channels: channels,
+      channels: nil,
       message_queue: %{}
     }
   end
