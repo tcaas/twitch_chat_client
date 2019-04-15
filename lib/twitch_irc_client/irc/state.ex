@@ -1,5 +1,5 @@
 defmodule TwitchIrcClient.Irc.State do
-  defstruct [:config, :socket, :roomstate, :userstate, :channels, :message_queue]
+  defstruct [:config, :socket, :roomstate, :userstate, :channels, :message_queue, :file]
 
   alias TwitchIrcClient.Irc.Config
   alias TwitchIrcClient.Irc.Channel
@@ -12,7 +12,7 @@ defmodule TwitchIrcClient.Irc.State do
       roomstate: nil,
       userstate: nil,
       channels: nil,
-      message_queue: %{}
+      message_queue: %{},
     }
   end
 
